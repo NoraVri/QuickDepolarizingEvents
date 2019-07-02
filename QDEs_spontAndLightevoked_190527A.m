@@ -9,7 +9,9 @@ close all;
 %2. concatenating traces for analysis (and creating a datastructure to hold them all)
 %3. getting all "clean" QDEs (peaksIdcs and baselineVs) in all traces
 %3b: getting amp, rise-time and half-width for all "clean" QDEs
-%4: separating out QDEs happening under different (baselineV and light) conditions
+        %%%up to this point QDEs are tracked with reference to their Vtrace of origin
+%4: separating out light-evoked and spontaneous QDEs
+    %%and saving QDEtraces and results for each in a separate matrix/table 
 %5: plotting things 
 %% step1: looking at the raw data
 %trace length should be the same for all concatenated traces
@@ -41,12 +43,13 @@ fileList = dir('*_light_wholeField*.mat');
 Vs = [];
 Is = [];
 TTLs = [];
-for i = 4:length(fileList)
+for i = 4:length(fileList)%!first three files were longer, leaving them out
     load(fileList(i).name);
     vs = rawData_traces.voltage;
         meanVs = mean(vs);
     is = rawData_traces.current;
     ttl = rawData_traces.TTLpulse;
+        %%filtering out traces where cell has bad baselineV
         is = is(:,meanVs<-40);
         ttl = ttl(:,meanVs<-40);
         vs = vs(:,meanVs<-40);
@@ -72,17 +75,19 @@ baselineVs = cell(1,no_of_traces);
 min_QDEamp = 2;
 for i = 1:no_of_traces
 [Vpeaks_idcs{i},baselineVs{i}] = finding_fastDepolarizingPotentials(collectedQDEsData.voltage(:,i),min_QDEamp);
-%%plotting each Vtrace and corresponding TTL pulse, marking peaks and baselines on detected QDEs
+
+%%plotting each Vtrace and corresponding TTL pulse, marking detected peaks and baselines on detected QDEs
 % figure;hold on;
 %     plot(collectedQDEsData.time_axis,collectedQDEsData.voltage(:,i),'b');
 %     plot(collectedQDEsData.time_axis,smoothdata(collectedQDEsData.voltage(:,i),'movmedian',10),'k');
 %     plot(collectedQDEsData.time_axis,collectedQDEsData.TTL(:,i)+mean(collectedQDEsData.voltage(:,i)),'r');
 %     scatter(collectedQDEsData.time_axis(Vpeaks_idcs{i}),collectedQDEsData.voltage(Vpeaks_idcs{i},i),'r','filled');
 %     scatter(collectedQDEsData.time_axis(Vpeaks_idcs{i} - 100),baselineVs{i},'g','filled');
-% %filtering out spikes idcs
-%     peakVs_i = collectedQDEsData.voltage(Vpeaks_idcs{i},i);
-%     Vpeaks_idcs{i}(peakVs_i > 0) = [];
-%     baselineVs{i}(peakVs_i > 0) = [];
+
+%filtering out spikes idcs
+    peakVs_i = collectedQDEsData.voltage(Vpeaks_idcs{i},i);
+    Vpeaks_idcs{i}(peakVs_i > 0) = [];
+    baselineVs{i}(peakVs_i > 0) = [];
 end
 %adding results into collectedData
 collectedQDEsData.Vpeaks_idcs = Vpeaks_idcs;
@@ -99,9 +104,10 @@ end
 collectedQDEsData.amps = QDEamps;
 collectedQDEsData.riseTimes = QDEriseTimes;
 collectedQDEsData.halfWidths = QDEhalfWidths;
-%% step4: separating out QDEs happening under different (baselineV and light) conditions
-%%4a: separating by spont or light-evoked
-%for each trace, get the idx numbers where light turns on and off
+%% step4: separating out light-evoked and spontaneous QDEs
+%%and saving QDEtraces and results for each in a separate matrix/table
+
+%getting the idx numbers where light turns on and off for each trace
 TTLon_idcs = zeros(1,no_of_traces);
 TTLoff_idcs = zeros(1,no_of_traces);
 for i = 1:no_of_traces
@@ -109,6 +115,53 @@ for i = 1:no_of_traces
     TTLon_idcs(i) = tracei_TTLon(1);
     TTLoff_idcs(i) = tracei_TTLon(end);
 end
+%ChR activates rather slowly, need to take that into account both at the beginning and end of the light pulse
+ChR_minActivationTime_inIdcs = 2*20;%2ms to take into account ChR activation, times sampling interval
+ChR_postActivationTime_inIdcs = 10*20;%after 10ms ChR can be still depolarizing the axons
+lightEvoked_startIdcs = TTLon_idcs + ChR_minActivationTime_inIdcs;
+lightEvoked_endIdcs = TTLoff_idcs + ChR_postActivationTime_inIdcs;
+
+spontQDEs_tracesMatrix = [];
+spontQDEs_traceNos = [];
+spontQDEs_VpeaksIdcs = [];
+lightEvokedQDEs_tracesMatrix = [];
+lightEvokedQDEs_traceNos = [];
+lightEvokedQDEs_VpeaksIdcs = [];
+
+for i = 1:no_of_traces
+    tracei_VpeaksIdcs = collectedQDEsData.Vpeaks_idcs{i};
+    tracei_baselineVs = collectedQDEsData.baselineVs{i};
+    
+    tracei_lightStart = lightEvoked_startIdcs(i);
+    tracei_lightEnd = lightEvoked_endIdcs(i);
+    for j = 1:length(tracei_VpeaksIdcs)
+        QDEtrace_ij = collectedQDEsData.voltage(tracei_VpeaksIdcs(j)-120:tracei_VpeaksIdcs(j)+800,i);
+        if (tracei_VpeaksIdcs(j) > tracei_lightStart) && (tracei_VpeaksIdcs(j) < tracei_lightEnd)
+            lightEvokedQDEs_tracesMatrix = [lightEvokedQDEs_tracesMatrix, QDEtrace_ij];
+            lightEvokedQDEs_traceNos = [lightEvokedQDEs_traceNos; i];
+            lightEvokedQDEs_VpeaksIdcs = [lightEvokedQDEs_VpeaksIdcs; tracei_VpeaksIdcs(j)];
+        else
+            spontQDEs_tracesMatrix = [spontQDEs_tracesMatrix, QDEtrace_ij];
+            spontQDEs_traceNos = [spontQDEs_traceNos; i];
+            spontQDEs_VpeaksIdcs = [spontQDEs_VpeaksIdcs; tracei_VpeaksIdcs(j)];
+        end
+    end 
+end
+
+
+
+
+
+%%
+%%
+%%
+
+
+
+
+
+
+%%4a: separating by spont or light-evoked
 
 spontQDEs_peaksIdcs = cell(no_of_traces,1);
 spontQDEs_baselineVs = cell(no_of_traces,1);

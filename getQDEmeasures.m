@@ -26,9 +26,8 @@ halfWidths(i) = length(halfWidthTrace) / 20;
     figure;hold on;
     plot(QDEtrace_time_axis,QDEtrace,'b')
     scatter(QDEtrace_time_axis(riseTimeTrace-1),QDEtrace(riseTimeTrace),'r');
-    scatter(QDEtrace_time_axis(halfWidthTrace),QDEtrace(halfWidthTrace),'g');
+    scatter(QDEtrace_time_axis(halfWidthTrace),ones(1,length(halfWidthTrace))*.5*amps(i)+baselineVs(i),'g');
     scatter(QDEtrace_time_axis(1:60),ones(1,60)*baselineVs(i),'k');
-    title(['QDE no' num2str(i)])
     xlim([-6 40])
 end
 
