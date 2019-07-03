@@ -40,7 +40,7 @@ fileList = dir('*_light_wholeField*.mat');
 Vs = [];
 Is = [];
 TTLs = [];
-for i = 18:length(fileList)%!first three files were longer, leaving them out
+for i = 18%:length(fileList)%!first three files were longer, leaving them out
     load(fileList(i).name);
     vs = rawData_traces.voltage;
         meanVs = mean(vs);
@@ -69,6 +69,10 @@ collectedQDEsData.time_axis = time_axis;
 %QDEs are indexed by the trace no. they were in and the idx of the QDE peak within that trace (first two columns)
 %The table also contains the QDE in a window around the peak (third column), 
 %and the amplitude, rise-time and half-width (!half-width can be off when decay isn't smooth)
+min_QDEamp = .2;
+max_QDEpeakV = -10;
+
+[collectedQDEsData_table] = getQuickDepolarizingEvents_inTable(collectedQDEsData,min_QDEamp,max_QDEpeakV);
 
 
 
@@ -84,8 +88,7 @@ collectedQDEsData.time_axis = time_axis;
 
 
 
-
-
+%%
 
 %QDEs are detected by the finding_fastDepolarizingPotentials function, 
 %which detects fast depolarizing events based on Vderivative and filters them based on amplitude, baselineV stability and decay back towards baseline
