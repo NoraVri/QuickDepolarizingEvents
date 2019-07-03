@@ -14,8 +14,8 @@ smoothing_factor = 10;%no. of indices over which smoothing is applied; .5ms in t
 peakFindingWindow = 12.5;%in ms
 QDE_peakFindingWindow = peakFindingWindow * sr;%in indices
 %two 1-ms windows in which to test pre-peak baselineV stability
-baselineTestWindow1 = [-6 -5];
-baselineTestWindow2 = [-4 -3];
+baselineTestWindow1 = [-5 -6];
+baselineTestWindow2 = [-3 -4];
 QDE_baselineTestWindow1 = baselineTestWindow1 * sr;
 QDE_baselineTestWindow2 = baselineTestWindow2 * sr;
 %leniency factor on how far baseline in these windows can vary
@@ -153,7 +153,7 @@ QDEs_baselineVs = zeros(no_of_VpeaksCandidates,1);
     for i = 1:no_of_VpeaksCandidates
         baselineVs_inWindow1(i) = mean(smoothVtrace(baselineTestWindows1(i,1):baselineTestWindows1(i,2)));
         baselineVs_inWindow2(i) = mean(smoothVtrace(baselineTestWindows2(i,1):baselineTestWindows2(i,2)));
-        QDEs_baselineVs(i) = mean(smoothVtrace(baselineTestWindows1(i,1):baselineTestWindows2(i,2)));
+        QDEs_baselineVs(i) = mean(smoothVtrace(baselineTestWindows2(i,1):baselineTestWindows1(i,2)));
     end
     VbaselineDifference = abs(baselineVs_inWindow1 - baselineVs_inWindow2);
 QDE_VpeaksCandidates(VbaselineDifference > baselineV_maxMismatch) = [];
@@ -209,14 +209,14 @@ QDEs_halfWidths = zeros(no_of_QDEs,1);
     QDEs_halfWidths(i) = length(halfWidthTrace)/sr;
     
 %plotting each QDE_Vtrace with its measures marked 
-% figure;hold on;
-%     plot(QDEtrace_time_axis,QDE_Vtrace_i,'b');
-%     scatter(QDEtrace_time_axis(riseTimeTrace),QDE_Vtrace_i(riseTimeTrace),'r');
-%     scatter(QDEtrace_time_axis(halfWidthTrace),ones(1,length(halfWidthTrace))*.5*QDEs_amps(i)+QDEs_baselineVs(i),'g');
-%     scatter(QDEtrace_time_axis(1:(QDE_prePeakWindow/2)),ones(1,length(1:(QDE_prePeakWindow/2)))*QDEs_baselineVs(i),'k')
-%     xlabel('time (ms)')
-%     ylabel('voltage (mV)')
-%     xlim([QDEtrace_time_axis(1) QDEtrace_time_axis(end)])
+figure;hold on;
+    plot(QDEtrace_time_axis,QDE_Vtrace_i,'b');
+    scatter(QDEtrace_time_axis(riseTimeTrace),QDE_Vtrace_i(riseTimeTrace),'r');
+    scatter(QDEtrace_time_axis(halfWidthTrace),ones(1,length(halfWidthTrace))*.5*QDEs_amps(i)+QDEs_baselineVs(i),'g');
+    scatter(QDEtrace_time_axis(1:(QDE_prePeakWindow/2)),ones(1,length(1:(QDE_prePeakWindow/2)))*QDEs_baselineVs(i),'k')
+    xlabel('time (ms)')
+    ylabel('voltage (mV)')
+    xlim([QDEtrace_time_axis(1) QDEtrace_time_axis(end)])
     end
 end
 
