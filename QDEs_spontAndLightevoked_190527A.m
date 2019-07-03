@@ -7,11 +7,8 @@ close all;
 %analysis steps:
 %1. looking at the raw data
 %2. concatenating traces for analysis (and creating a datastructure to hold them all)
-%3. getting all "clean" QDEs (peaksIdcs and baselineVs) in all traces
-%3b: getting amp, rise-time and half-width for all "clean" QDEs
-        %%%up to this point QDEs are tracked with reference to their Vtrace of origin
-%4: separating out light-evoked and spontaneous QDEs
-    %%and saving QDEtraces and results for each in a separate matrix/table 
+%3. getting all "clean" QDEs (peaksIdcs and baselineVs) in all traces in a table
+%4: separating out light-evoked and spontaneous QDEs into two tables
 %5: plotting things 
 %% step1: looking at the raw data
 %trace length should be the same for all concatenated traces
@@ -43,16 +40,17 @@ fileList = dir('*_light_wholeField*.mat');
 Vs = [];
 Is = [];
 TTLs = [];
-for i = 4:length(fileList)%!first three files were longer, leaving them out
+for i = 18:length(fileList)%!first three files were longer, leaving them out
     load(fileList(i).name);
     vs = rawData_traces.voltage;
         meanVs = mean(vs);
     is = rawData_traces.current;
     ttl = rawData_traces.TTLpulse;
         %%filtering out traces where cell has bad baselineV
-        is = is(:,meanVs<-40);
-        ttl = ttl(:,meanVs<-40);
-        vs = vs(:,meanVs<-40);
+minVrest = -40;
+        is = is(:,meanVs<minVrest);
+        ttl = ttl(:,meanVs<minVrest);
+        vs = vs(:,meanVs<minVrest);
     Vs = [Vs vs];
     Is = [Is is];
     TTLs = [TTLs ttl];    
@@ -66,6 +64,29 @@ collectedQDEsData.current = Is;
 collectedQDEsData.TTL = TTLs;
 collectedQDEsData.time_axis = time_axis;
 %% step3: getting all "clean" QDEs (peaksIdcs and baselineVs) in all traces
+%the getQuickDepolarizingEvents_inTable takes the collectedQDEsData
+%structure and returns a table containing all "clean" QDEs (see function for criteria).
+%QDEs are indexed by the trace no. they were in and the idx of the QDE peak within that trace (first two columns)
+%The table also contains the QDE in a window around the peak (third column), 
+%and the amplitude, rise-time and half-width (!half-width can be off when decay isn't smooth)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 %QDEs are detected by the finding_fastDepolarizingPotentials function, 
 %which detects fast depolarizing events based on Vderivative and filters them based on amplitude, baselineV stability and decay back towards baseline
 no_of_traces = length(collectedQDEsData.voltage(1,:));
