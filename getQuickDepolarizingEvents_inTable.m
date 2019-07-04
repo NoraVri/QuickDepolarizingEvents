@@ -79,7 +79,11 @@ collectedQDEsData_table = [];
             singleVtrace_no_of_QDEs = length(QDEs_VpeaksIdcs);
             traceNo = ones(singleVtrace_no_of_QDEs,1)*trace_no;
             
-            singleVtrace_QDEsTable = table(traceNo,QDEs_VpeaksIdcs,QDEs_Vtraces,QDEs_baselineVs,QDEs_amps,QDEs_riseTimes,QDEs_halfWidths);
+            baselineVs = QDEs_baselineVs;
+            amps = QDEs_amps;
+            riseTimes = QDEs_riseTimes;
+            halfWidths = QDEs_halfWidths;
+            singleVtrace_QDEsTable = table(traceNo,QDEs_VpeaksIdcs,baselineVs,amps,riseTimes,halfWidths,QDEs_Vtraces);
             
             collectedQDEsData_table = [collectedQDEsData_table; singleVtrace_QDEsTable];
         end

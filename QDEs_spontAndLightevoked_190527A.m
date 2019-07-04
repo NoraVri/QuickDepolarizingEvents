@@ -72,121 +72,20 @@ max_QDEpeakV = -10;
 
 [collectedQDEsData_table] = getQuickDepolarizingEvents_inTable(collectedQDEsData,min_QDEamp,max_QDEpeakV);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 %% step4: separating out light-evoked and spontaneous QDEs
-%%and saving QDEtraces and results for each in a separate matrix/table
-
-%getting the idx numbers where light turns on and off for each trace
-TTLon_idcs = zeros(1,no_of_traces);
-TTLoff_idcs = zeros(1,no_of_traces);
-for i = 1:no_of_traces
-    tracei_TTLon = find(collectedQDEsData.TTL(:,i)>9);
-    TTLon_idcs(i) = tracei_TTLon(1);
-    TTLoff_idcs(i) = tracei_TTLon(end);
-end
-%ChR activates rather slowly, need to take that into account both at the beginning and end of the light pulse
-ChR_minActivationTime_inIdcs = 2*20;%2ms to take into account ChR activation, times sampling interval
-ChR_postActivationTime_inIdcs = 10*20;%after 10ms ChR can be still depolarizing the axons
-lightEvoked_startIdcs = TTLon_idcs + ChR_minActivationTime_inIdcs;
-lightEvoked_endIdcs = TTLoff_idcs + ChR_postActivationTime_inIdcs;
-
-spontQDEs_tracesMatrix = [];
-spontQDEs_traceNos = [];
-spontQDEs_VpeaksIdcs = [];
-lightEvokedQDEs_tracesMatrix = [];
-lightEvokedQDEs_traceNos = [];
-lightEvokedQDEs_VpeaksIdcs = [];
-
-for i = 1:no_of_traces
-    tracei_VpeaksIdcs = collectedQDEsData.Vpeaks_idcs{i};
-    tracei_baselineVs = collectedQDEsData.baselineVs{i};
-    
-    tracei_lightStart = lightEvoked_startIdcs(i);
-    tracei_lightEnd = lightEvoked_endIdcs(i);
-    for j = 1:length(tracei_VpeaksIdcs)
-        QDEtrace_ij = collectedQDEsData.voltage(tracei_VpeaksIdcs(j)-120:tracei_VpeaksIdcs(j)+800,i);
-        if (tracei_VpeaksIdcs(j) > tracei_lightStart) && (tracei_VpeaksIdcs(j) < tracei_lightEnd)
-            lightEvokedQDEs_tracesMatrix = [lightEvokedQDEs_tracesMatrix, QDEtrace_ij];
-            lightEvokedQDEs_traceNos = [lightEvokedQDEs_traceNos; i];
-            lightEvokedQDEs_VpeaksIdcs = [lightEvokedQDEs_VpeaksIdcs; tracei_VpeaksIdcs(j)];
-        else
-            spontQDEs_tracesMatrix = [spontQDEs_tracesMatrix, QDEtrace_ij];
-            spontQDEs_traceNos = [spontQDEs_traceNos; i];
-            spontQDEs_VpeaksIdcs = [spontQDEs_VpeaksIdcs; tracei_VpeaksIdcs(j)];
-        end
-    end 
-end
-
-
-
-
-
-%%
-%%
-%%
+[spontQDEs_table,evokedQDEs_table] = splitQDEsTable_toLightEvokedAndSpont(collectedQDEsData,collectedQDEsData_table);
 
 
 
 
 
 
-%%4a: separating by spont or light-evoked
 
-spontQDEs_peaksIdcs = cell(no_of_traces,1);
-spontQDEs_baselineVs = cell(no_of_traces,1);
-evokedQDEs_peaksIdcs = cell(no_of_traces,1);
-evokedQDEs_baselineVs = cell(no_of_traces,1);
-    ChRtime_prePeak_inidcs = 20*2;%2 ms to account for time it takes to activate axons
-    ChRtime_inidcs = 20*15;%15 ms or so times the number of samples per ms
-for i = 1:no_of_traces
-    tracei_Vpeaks_idcs = Vpeaks_idcs{i};
-    tracei_baselineVs = baselineVs{i};
-    
-    spontQDEs_peaksIdcs{i} = tracei_Vpeaks_idcs(tracei_Vpeaks_idcs < (TTLon_idcs(i)+ChRtime_prePeak_inidcs) | tracei_Vpeaks_idcs > (TTLoff_idcs(i) + ChRtime_inidcs));
-    spontQDEs_baselineVs{i} = tracei_baselineVs(tracei_Vpeaks_idcs < (TTLon_idcs(i)+ChRtime_prePeak_inidcs) | tracei_Vpeaks_idcs > (TTLoff_idcs(i) + ChRtime_inidcs));
-    evokedQDEs_peaksIdcs{i} = tracei_Vpeaks_idcs(tracei_Vpeaks_idcs >= (TTLon_idcs(i)+ChRtime_prePeak_inidcs) & tracei_Vpeaks_idcs <= (TTLoff_idcs(i) + ChRtime_inidcs));
-    evokedQDEs_baselineVs{i} = tracei_baselineVs(tracei_Vpeaks_idcs >= (TTLon_idcs(i)+ChRtime_prePeak_inidcs) & tracei_Vpeaks_idcs <= (TTLoff_idcs(i) + ChRtime_inidcs));
-end
-%adding results into collectedData
-collectedQDEsData.spontQDEs_idcs = spontQDEs_peaksIdcs;
-collectedQDEsData.spontQDEs_baselineVs = spontQDEs_baselineVs;
-collectedQDEsData.evokedQDEs_idcs = evokedQDEs_peaksIdcs;
-collectedQDEsData.evokedQDEs_baselineVs = evokedQDEs_baselineVs;
 
-%%4b: separating by baseline V
-lowBaselineQDEs_peaksIdcs = cell(no_of_traces,1);
-lowBaselineQDEs_baselineVs = cell(no_of_traces,1);
-highBaselineQDEs_peaksIdcs = cell(no_of_traces,1);
-highBaselineQDEs_baselineVs = cell(no_of_traces,1);
-    lowBaseline_maxV = -65;
-    highBaseline_minV = -60;
-for i = 1:no_of_traces
-    tracei_Vpeaks_idcs = Vpeaks_idcs{i};
-    tracei_baselineVs = baselineVs{i};
-    
-    lowBaselineQDEs_peaksIdcs{i} = tracei_Vpeaks_idcs(tracei_baselineVs < lowBaseline_maxV);
-    lowBaselineQDEs_baselineVs{i} = tracei_baselineVs(tracei_baselineVs < lowBaseline_maxV);
-    highBaselineQDEs_peaksIdcs{i} = tracei_Vpeaks_idcs(tracei_baselineVs > highBaseline_minV);
-    highBaselineQDEs_baselineVs{i} = tracei_baselineVs(tracei_baselineVs > highBaseline_minV);
-end
-%adding results into collectedData
-collectedQDEsData.lowBaselineQDEs_peaksIdcs = lowBaselineQDEs_peaksIdcs;
-collectedQDEsData.lowBaselineQDEs_baselineVs = lowBaselineQDEs_baselineVs;
-collectedQDEsData.highBaselineQDEs_peaksIdcs = highBaselineQDEs_peaksIdcs;
-collectedQDEsData.highBaselineQDEs_baselineVs = highBaselineQDEs_baselineVs;
+
+
+
+
 %% step5: plotting 
 %low-baseline spont
 lowBaseline_spontQDEs_peaksIdcs = intersecting_vectors_in_cells(lowBaselineQDEs_peaksIdcs,spontQDEs_peaksIdcs);
