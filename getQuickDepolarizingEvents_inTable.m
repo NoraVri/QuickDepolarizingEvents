@@ -9,13 +9,13 @@ function [collectedQDEsData_table] = getQuickDepolarizingEvents_inTable(collecte
 %%settings:
 sr = 20;%number of samples per ms
 %smoothing factor to apply to the raw data
-smoothing_factor = 10;%no. of indices over which smoothing is applied; .5ms in this case
+smoothing_factor = 4;%no. of indices over which smoothing is applied;
 %window in which to search for Vpeak after candidate-point has been selected based on diff(V)
 peakFindingWindow = 12.5;%in ms
 QDE_peakFindingWindow = peakFindingWindow * sr;%in indices
 %two 1-ms windows in which to test pre-peak baselineV stability
-baselineTestWindow1 = [-5 -6];
-baselineTestWindow2 = [-3 -4];
+baselineTestWindow1 = [-6 -5];
+baselineTestWindow2 = [-4 -3];
 QDE_baselineTestWindow1 = baselineTestWindow1 * sr;
 QDE_baselineTestWindow2 = baselineTestWindow2 * sr;
 %leniency factor on how far baseline in these windows can vary
@@ -71,7 +71,7 @@ collectedQDEsData_table = [];
 
         %step4: extracting QDE_Vtraces and getting rise-time and halfwidth
         if ~isempty(QDEs_VpeaksIdcs)
-            [QDEs_Vtraces,QDEs_riseTimes,QDEs_halfWidths] = get_QDEs_traces_and_measures(singleVtrace,QDEs_VpeaksIdcs,QDEs_baselineVs,QDEs_amps,QDE_prePeakWindow,QDE_postPeakWindow,sr);
+            [QDEs_Vtraces,QDEs_riseTimes,QDEs_halfWidths] = get_QDEs_traces_and_measures(smoothVtrace,QDEs_VpeaksIdcs,QDEs_baselineVs,QDEs_amps,QDE_prePeakWindow,QDE_postPeakWindow,sr);
         end
         
         %step5: tabularizing results and appending it to collectedQDEsDataTable
@@ -117,7 +117,7 @@ function[QDE_VpeaksCandidates] = finding_QDE_Vpeaks(singleVtrace,smoothVtrace,QD
     no_of_candidates = length(QDEstartsCandidates);
     QDE_VpeaksCandidates = zeros(no_of_candidates,1);
     for i = 1:no_of_candidates
-        V_inWindow = singleVtrace((QDEstartsCandidates(i) - QDE_peakFindingWindow):(QDEstartsCandidates(i) + QDE_peakFindingWindow));
+        V_inWindow = smoothVtrace((QDEstartsCandidates(i) - QDE_peakFindingWindow):(QDEstartsCandidates(i) + QDE_peakFindingWindow));
         [~,peakVinwindowindex] = max(V_inWindow);
         spikeletIdx_to_peakVidx = peakVinwindowindex - QDE_peakFindingWindow - 1;
         peakVindex = QDEstartsCandidates(i) + spikeletIdx_to_peakVidx;
@@ -144,8 +144,8 @@ QDE_VpeaksCandidates(Vs_at_candidateQDEpeaks > max_QDEpeakV) = [];
 no_of_VpeaksCandidates = length(QDE_VpeaksCandidates);
 %filtering out QDE_VpeaksCandidates if the difference between baselineVs in
 %two windows pre-peak is more than maxMismatch factor and getting baselineVs
-baselineTestWindows1 = [QDE_VpeaksCandidates - QDE_baselineTestWindow1(1), QDE_VpeaksCandidates - QDE_baselineTestWindow1(2)];
-baselineTestWindows2 = [QDE_VpeaksCandidates - QDE_baselineTestWindow2(1), QDE_VpeaksCandidates - QDE_baselineTestWindow2(2)];
+baselineTestWindows1 = [QDE_VpeaksCandidates + QDE_baselineTestWindow1(1), QDE_VpeaksCandidates + QDE_baselineTestWindow1(2)];
+baselineTestWindows2 = [QDE_VpeaksCandidates + QDE_baselineTestWindow2(1), QDE_VpeaksCandidates + QDE_baselineTestWindow2(2)];
 
 baselineVs_inWindow1 = zeros(no_of_VpeaksCandidates,1);
 baselineVs_inWindow2 = zeros(no_of_VpeaksCandidates,1);
@@ -153,7 +153,7 @@ QDEs_baselineVs = zeros(no_of_VpeaksCandidates,1);
     for i = 1:no_of_VpeaksCandidates
         baselineVs_inWindow1(i) = mean(smoothVtrace(baselineTestWindows1(i,1):baselineTestWindows1(i,2)));
         baselineVs_inWindow2(i) = mean(smoothVtrace(baselineTestWindows2(i,1):baselineTestWindows2(i,2)));
-        QDEs_baselineVs(i) = mean(smoothVtrace(baselineTestWindows2(i,1):baselineTestWindows1(i,2)));
+        QDEs_baselineVs(i) = mean(smoothVtrace(baselineTestWindows1(i,1):baselineTestWindows2(i,2)));
     end
     VbaselineDifference = abs(baselineVs_inWindow1 - baselineVs_inWindow2);
 QDE_VpeaksCandidates(VbaselineDifference > baselineV_maxMismatch) = [];
@@ -183,7 +183,7 @@ baselineReReach_windows = [QDE_VpeaksCandidates+QDE_backToBaselineWindow(1),QDE_
     QDEs_VpeaksIdcs = QDE_VpeaksCandidates;
 end
 
-function [QDEs_Vtraces,QDEs_riseTimes,QDEs_halfWidths] = get_QDEs_traces_and_measures(singleVtrace,QDEs_VpeaksIdcs,QDEs_baselineVs,QDEs_amps,QDE_prePeakWindow,QDE_postPeakWindow,sr)
+function [QDEs_Vtraces,QDEs_riseTimes,QDEs_halfWidths] = get_QDEs_traces_and_measures(smoothVtrace,QDEs_VpeaksIdcs,QDEs_baselineVs,QDEs_amps,QDE_prePeakWindow,QDE_postPeakWindow,sr)
 %!!issue: QDE decays are not always smooth, and halfWidth measurement can be off when additional depolarizing events hit in the first half of the post-peak window
 
 no_of_QDEs = length(QDEs_VpeaksIdcs);
@@ -197,7 +197,7 @@ QDEs_halfWidths = zeros(no_of_QDEs,1);
 
     for i = 1:no_of_QDEs
         %getting Vtrace in window around QDEpeak
-        QDE_Vtrace_i = singleVtrace((QDEs_VpeaksIdcs(i)-QDE_prePeakWindow):(QDEs_VpeaksIdcs(i)+QDE_postPeakWindow));
+        QDE_Vtrace_i = smoothVtrace((QDEs_VpeaksIdcs(i)-QDE_prePeakWindow):(QDEs_VpeaksIdcs(i)+QDE_postPeakWindow));
     QDEs_Vtraces(i,:) = QDE_Vtrace_i';
         %getting QDE rise-time (time to go from 10%-90% QDE amp, in ms)
         risingTrace_i = QDE_Vtrace_i(1:QDE_prePeakWindow) - QDEs_baselineVs(i);
@@ -206,6 +206,10 @@ QDEs_halfWidths = zeros(no_of_QDEs,1);
         %getting QDE half-width (QDE width in ms, at .5 amp)
         risingDecayingTrace_i = QDE_Vtrace_i(1:(QDE_postPeakWindow/2)) - QDEs_baselineVs(i);
         halfWidthTrace = find(risingDecayingTrace_i > .5*QDEs_amps(i));
+            halfWidthTrace_consecutiveness = find(diff(halfWidthTrace) > 1,1);
+            if ~isempty(halfWidthTrace_consecutiveness)
+                halfWidthTrace = halfWidthTrace(1:halfWidthTrace_consecutiveness);
+            end
     QDEs_halfWidths(i) = length(halfWidthTrace)/sr;
     
 %plotting each QDE_Vtrace with its measures marked 
@@ -217,6 +221,7 @@ figure;hold on;
     xlabel('time (ms)')
     ylabel('voltage (mV)')
     xlim([QDEtrace_time_axis(1) QDEtrace_time_axis(end)])
+    ylim([QDEs_baselineVs(i)-2, QDEs_baselineVs(i)+15])
     end
 end
 

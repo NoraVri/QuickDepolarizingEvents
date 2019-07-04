@@ -40,7 +40,7 @@ fileList = dir('*_light_wholeField*.mat');
 Vs = [];
 Is = [];
 TTLs = [];
-for i = 18%:length(fileList)%!first three files were longer, leaving them out
+for i = 4:length(fileList)%!first three files were longer, leaving them out
     load(fileList(i).name);
     vs = rawData_traces.voltage;
         meanVs = mean(vs);
@@ -56,10 +56,8 @@ minVrest = -40;
     TTLs = [TTLs ttl];    
 end
 time_axis = rawData_traces.time_axis;
-Vs_smoothed = smoothdata(Vs,2,'movmedian',10);
 
 collectedQDEsData.voltage = Vs;
-collectedQDEsData.smoothedVoltage = Vs_smoothed;
 collectedQDEsData.current = Is;
 collectedQDEsData.TTL = TTLs;
 collectedQDEsData.time_axis = time_axis;
@@ -69,7 +67,7 @@ collectedQDEsData.time_axis = time_axis;
 %QDEs are indexed by the trace no. they were in and the idx of the QDE peak within that trace (first two columns)
 %The table also contains the QDE in a window around the peak (third column), 
 %and the amplitude, rise-time and half-width (!half-width can be off when decay isn't smooth)
-min_QDEamp = .2;
+min_QDEamp = 2;
 max_QDEpeakV = -10;
 
 [collectedQDEsData_table] = getQuickDepolarizingEvents_inTable(collectedQDEsData,min_QDEamp,max_QDEpeakV);
@@ -88,46 +86,6 @@ max_QDEpeakV = -10;
 
 
 
-%%
-
-%QDEs are detected by the finding_fastDepolarizingPotentials function, 
-%which detects fast depolarizing events based on Vderivative and filters them based on amplitude, baselineV stability and decay back towards baseline
-no_of_traces = length(collectedQDEsData.voltage(1,:));
-Vpeaks_idcs = cell(1,no_of_traces);
-baselineVs = cell(1,no_of_traces);
-
-min_QDEamp = 2;
-for i = 1:no_of_traces
-[Vpeaks_idcs{i},baselineVs{i}] = finding_fastDepolarizingPotentials(collectedQDEsData.voltage(:,i),min_QDEamp);
-
-%%plotting each Vtrace and corresponding TTL pulse, marking detected peaks and baselines on detected QDEs
-% figure;hold on;
-%     plot(collectedQDEsData.time_axis,collectedQDEsData.voltage(:,i),'b');
-%     plot(collectedQDEsData.time_axis,smoothdata(collectedQDEsData.voltage(:,i),'movmedian',10),'k');
-%     plot(collectedQDEsData.time_axis,collectedQDEsData.TTL(:,i)+mean(collectedQDEsData.voltage(:,i)),'r');
-%     scatter(collectedQDEsData.time_axis(Vpeaks_idcs{i}),collectedQDEsData.voltage(Vpeaks_idcs{i},i),'r','filled');
-%     scatter(collectedQDEsData.time_axis(Vpeaks_idcs{i} - 100),baselineVs{i},'g','filled');
-
-%filtering out spikes idcs
-    peakVs_i = collectedQDEsData.voltage(Vpeaks_idcs{i},i);
-    Vpeaks_idcs{i}(peakVs_i > 0) = [];
-    baselineVs{i}(peakVs_i > 0) = [];
-end
-%adding results into collectedData
-collectedQDEsData.Vpeaks_idcs = Vpeaks_idcs;
-collectedQDEsData.baselineVs = baselineVs;
-
-%% 3b: getting amp, rise-time and half-width for all "clean" QDEs
-QDEamps = cell(1,no_of_traces);
-QDEriseTimes = cell(1,no_of_traces);
-QDEhalfWidths = cell(1,no_of_traces);
-for i = 1:no_of_traces
-    [QDEamps{i},QDEriseTimes{i},QDEhalfWidths{i}] = getQDEmeasures(collectedQDEsData.voltage(:,i),collectedQDEsData.Vpeaks_idcs{i},collectedQDEsData.baselineVs{i});
-    %%plotting code runs from inside the getQDEmeasures function
-end
-collectedQDEsData.amps = QDEamps;
-collectedQDEsData.riseTimes = QDEriseTimes;
-collectedQDEsData.halfWidths = QDEhalfWidths;
 %% step4: separating out light-evoked and spontaneous QDEs
 %%and saving QDEtraces and results for each in a separate matrix/table
 
