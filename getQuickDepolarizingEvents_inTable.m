@@ -185,6 +185,14 @@ baselineReReach_windows = [QDE_VpeaksCandidates+QDE_backToBaselineWindow(1),QDE_
     QDEs_amps(baselineReturnDifferences < 0) = [];
     
     QDEs_VpeaksIdcs = QDE_VpeaksCandidates;
+    
+%plotting the Vtrace and the detected QDEpeaks with their baselines
+% figure;hold on;
+% plot(singleVtrace,'b');
+% scatter(QDEs_VpeaksIdcs,singleVtrace(QDEs_VpeaksIdcs),'r');
+% scatter(QDEs_VpeaksIdcs+QDE_baselineTestWindow1(2),singleVtrace(QDEs_VpeaksIdcs+QDE_baselineTestWindow1(2)),'g');
+% xlabel('index no.')
+% ylabel('voltage (mV')
 end
 
 function [QDEs_Vtraces,QDEs_riseTimes,QDEs_halfWidths] = get_QDEs_traces_and_measures(smoothVtrace,QDEs_VpeaksIdcs,QDEs_baselineVs,QDEs_amps,QDE_prePeakWindow,QDE_postPeakWindow,sr)
@@ -217,15 +225,15 @@ QDEs_halfWidths = zeros(no_of_QDEs,1);
     QDEs_halfWidths(i) = length(halfWidthTrace)/sr;
     
 %plotting each QDE_Vtrace with its measures marked 
-figure;hold on;
-    plot(QDEtrace_time_axis,QDE_Vtrace_i,'b');
-    scatter(QDEtrace_time_axis(riseTimeTrace),QDE_Vtrace_i(riseTimeTrace),'r');
-    scatter(QDEtrace_time_axis(halfWidthTrace),ones(1,length(halfWidthTrace))*.5*QDEs_amps(i)+QDEs_baselineVs(i),'g');
-    scatter(QDEtrace_time_axis(1:(QDE_prePeakWindow/2)),ones(1,length(1:(QDE_prePeakWindow/2)))*QDEs_baselineVs(i),'k')
-    xlabel('time (ms)')
-    ylabel('voltage (mV)')
-    xlim([QDEtrace_time_axis(1) QDEtrace_time_axis(end)])
-    ylim([QDEs_baselineVs(i)-2, QDEs_baselineVs(i)+15])
+% figure;hold on;
+%     plot(QDEtrace_time_axis,QDE_Vtrace_i,'b');
+%     scatter(QDEtrace_time_axis(riseTimeTrace),QDE_Vtrace_i(riseTimeTrace),'r');
+%     scatter(QDEtrace_time_axis(halfWidthTrace),ones(1,length(halfWidthTrace))*.5*QDEs_amps(i)+QDEs_baselineVs(i),'g');
+%     scatter(QDEtrace_time_axis(1:(QDE_prePeakWindow/2)),ones(1,length(1:(QDE_prePeakWindow/2)))*QDEs_baselineVs(i),'k')
+%     xlabel('time (ms)')
+%     ylabel('voltage (mV)')
+%     xlim([QDEtrace_time_axis(1) QDEtrace_time_axis(end)])
+%     ylim([QDEs_baselineVs(i)-2, QDEs_baselineVs(i)+15])
     end
 end
 

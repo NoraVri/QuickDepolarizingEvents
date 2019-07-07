@@ -12,35 +12,35 @@ close all;
 %5: plotting things 
 %% step1: looking at the raw data
 %trace length should be the same for all concatenated traces
-cell_name = '190527A';
-fileList = dir('*_light_wholeField*.mat');
+cell_name = '190529B';
+fileList = dir('*_light*.mat');
 %% plotting all traces overlayed for each file
-% for i = 1:length(fileList)
-%     load(fileList(i).name)
-%     V = rawData_traces.voltage;
-%     I = rawData_traces.current;
-%     TTL = rawData_traces.TTLpulse;
-%     time_axis = rawData_traces.time_axis;
-%     
-%     figure;
-%     ax(1) = subplot(2,1,1);hold on;
-%     plot(time_axis,V,'b');
-%         ylabel('voltage (mV)')
-%         title(fileList(i).name);
-%     ax(2) = subplot(2,1,2);hold on;
-%     plot(time_axis,I,'r');
-%     plot(time_axis,TTL,'k');
-%         ylabel('red: current (pA)')
-%         xlabel('time (ms)')
-%     linkaxes(ax,'x')
-% end
+for i = 1:length(fileList)
+    load(fileList(i).name)
+    V = rawData_traces.voltage;
+    I = rawData_traces.current;
+    TTL = rawData_traces.TTLpulse;
+    time_axis = rawData_traces.time_axis;
+    
+    figure;
+    ax(1) = subplot(2,1,1);hold on;
+    plot(time_axis,V,'b');
+        ylabel('voltage (mV)')
+        title(fileList(i).name);
+    ax(2) = subplot(2,1,2);hold on;
+    plot(time_axis,I,'r');
+    plot(time_axis,TTL,'k');
+        ylabel('red: current (pA)')
+        xlabel('time (ms)')
+    linkaxes(ax,'x')
+end
 
 %% step2: concatenating files for analysis
 %!! this script assumes that all files have the same length & sampling rate 
 Vs = [];
 Is = [];
 TTLs = [];
-for i = 4:length(fileList)%!first three files were longer, leaving them out
+for i = 1:length(fileList)%
     load(fileList(i).name);
     vs = rawData_traces.voltage;
         meanVs = mean(vs);
@@ -77,9 +77,10 @@ max_QDEpeakV = -10;
 
 
 
-%% plotting stuff
+%% plotting things
 figure; hold on;
 scatter(spontQDEs_table.baselineVs(spontQDEs_table.riseTimes<1.7),spontQDEs_table.amps(spontQDEs_table.riseTimes<1.7));
 scatter(evokedQDEs_table.baselineVs(evokedQDEs_table.riseTimes<1.7),evokedQDEs_table.amps(evokedQDEs_table.riseTimes<1.7),'r','filled')
 xlabel('baseline V'), ylabel('QDE amp')
 title('blue: spontaneous events, red: light-evoked events')
+
