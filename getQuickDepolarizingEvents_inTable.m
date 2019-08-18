@@ -187,12 +187,12 @@ baselineReReach_windows = [QDE_VpeaksCandidates+QDE_backToBaselineWindow(1),QDE_
     QDEs_VpeaksIdcs = QDE_VpeaksCandidates;
     
 %plotting the Vtrace and the detected QDEpeaks with their baselines
-% figure;hold on;
-% plot(singleVtrace,'b');
-% scatter(QDEs_VpeaksIdcs,singleVtrace(QDEs_VpeaksIdcs),'r');
-% scatter(QDEs_VpeaksIdcs+QDE_baselineTestWindow1(2),singleVtrace(QDEs_VpeaksIdcs+QDE_baselineTestWindow1(2)),'g');
-% xlabel('index no.')
-% ylabel('voltage (mV')
+figure;hold on;
+plot(singleVtrace,'b');
+scatter(QDEs_VpeaksIdcs,singleVtrace(QDEs_VpeaksIdcs),'r');
+scatter(QDEs_VpeaksIdcs+QDE_baselineTestWindow1(2),singleVtrace(QDEs_VpeaksIdcs+QDE_baselineTestWindow1(2)),'g');
+xlabel('index no.')
+ylabel('voltage (mV')
 end
 
 function [QDEs_Vtraces,QDEs_riseTimes,QDEs_halfWidths] = get_QDEs_traces_and_measures(smoothVtrace,QDEs_VpeaksIdcs,QDEs_baselineVs,QDEs_amps,QDE_prePeakWindow,QDE_postPeakWindow,sr)

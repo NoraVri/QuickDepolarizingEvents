@@ -12,8 +12,8 @@ for i = 1:length(VpeaksIdcs)
     windowed_time_axis = time_axis(1:751);
     baselined_Vtrace = Vtrace(window_for_plotting(i,1):window_for_plotting(i,2)) - baseline_Vs(i);
     baselined_smoothVtrace = smoothdata(baselined_Vtrace,'movmedian',10);
-%     plot(time_axis(window_for_plotting(i,1):window_for_plotting(i,2)),baselined_Vtrace,'b')
-    plot(windowed_time_axis,baselined_smoothVtrace,'color',colormap(QDEi_color_no(i),:))
+    plot(windowed_time_axis,baselined_Vtrace,'color',colormap(QDEi_color_no(i),:));
+%     plot(windowed_time_axis,baselined_smoothVtrace,'color',colormap(QDEi_color_no(i),:))
     xlabel('time (ms)')
     ylabel('voltage (mV)')
 end
