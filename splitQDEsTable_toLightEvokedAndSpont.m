@@ -7,12 +7,12 @@ no_of_traces = length(TTLs(1,:));
 TTLon_idcs = zeros(1,no_of_traces);
 TTLoff_idcs = zeros(1,no_of_traces);
 for i = 1:no_of_traces
-    tracei_TTLon = find(collectedQDEsData.TTL(:,i)>9);
+    tracei_TTLon = find(collectedQDEsData.TTL(:,i)>6);
     TTLon_idcs(i) = tracei_TTLon(1);
     TTLoff_idcs(i) = tracei_TTLon(end);
 end
 %ChR activates rather slowly, need to take that into account both at the beginning and end of the light pulse
-ChR_minActivationTime_inIdcs = 2*sr;%2ms to take into account ChR activation, times sampling interval
+ChR_minActivationTime_inIdcs = 2*sr;%2ms to take into account ChR activation, times sampling rate
 ChR_postActivationTime_inIdcs = 10*sr;%after 10ms ChR can be still depolarizing the axons
 lightEvoked_startIdcs = TTLon_idcs + ChR_minActivationTime_inIdcs;
 lightEvoked_endIdcs = TTLoff_idcs + ChR_postActivationTime_inIdcs;
