@@ -141,58 +141,58 @@ function[QDE_VpeaksCandidates] = finding_QDE_Vpeaks(singleVtrace,smoothVtrace,QD
 end
 
 function [QDEs_VpeaksIdcs,QDEs_baselineVs,QDEs_amps] = filter_QDE_VpeaksCandidates(singleVtrace,smoothVtrace,QDE_VpeaksCandidates,QDE_baselineTestWindow1,QDE_baselineTestWindow2,QDE_backToBaselineWindow,baselineV_maxMismatch,backToBaselineV_maxMismatch,min_QDEamp,max_QDEpeakV)
-%filtering out QDEpeaksCandidates that are actually spikes
-Vs_at_candidateQDEpeaks = singleVtrace(QDE_VpeaksCandidates);
-QDE_VpeaksCandidates(Vs_at_candidateQDEpeaks > max_QDEpeakV) = [];
+    %filtering out QDEpeaksCandidates that are actually spikes
+    Vs_at_candidateQDEpeaks = singleVtrace(QDE_VpeaksCandidates);
+    QDE_VpeaksCandidates(Vs_at_candidateQDEpeaks > max_QDEpeakV) = [];
 
-no_of_VpeaksCandidates = length(QDE_VpeaksCandidates);
-%filtering out QDE_VpeaksCandidates if the difference between baselineVs in
-%two windows pre-peak is more than maxMismatch factor and getting baselineVs
-baselineTestWindows1 = [QDE_VpeaksCandidates + QDE_baselineTestWindow1(1), QDE_VpeaksCandidates + QDE_baselineTestWindow1(2)];
-baselineTestWindows2 = [QDE_VpeaksCandidates + QDE_baselineTestWindow2(1), QDE_VpeaksCandidates + QDE_baselineTestWindow2(2)];
+    no_of_VpeaksCandidates = length(QDE_VpeaksCandidates);
+    %filtering out QDE_VpeaksCandidates if the difference between baselineVs in
+    %two windows pre-peak is more than maxMismatch factor and getting baselineVs
+    baselineTestWindows1 = [QDE_VpeaksCandidates + QDE_baselineTestWindow1(1), QDE_VpeaksCandidates + QDE_baselineTestWindow1(2)];
+    baselineTestWindows2 = [QDE_VpeaksCandidates + QDE_baselineTestWindow2(1), QDE_VpeaksCandidates + QDE_baselineTestWindow2(2)];
 
-baselineVs_inWindow1 = zeros(no_of_VpeaksCandidates,1);
-baselineVs_inWindow2 = zeros(no_of_VpeaksCandidates,1);
-QDEs_baselineVs = zeros(no_of_VpeaksCandidates,1);
-    for i = 1:no_of_VpeaksCandidates
-        baselineVs_inWindow1(i) = mean(smoothVtrace(baselineTestWindows1(i,1):baselineTestWindows1(i,2)));
-        baselineVs_inWindow2(i) = mean(smoothVtrace(baselineTestWindows2(i,1):baselineTestWindows2(i,2)));
-        QDEs_baselineVs(i) = mean(smoothVtrace(baselineTestWindows1(i,1):baselineTestWindows2(i,2)));
-    end
-    VbaselineDifference = abs(baselineVs_inWindow1 - baselineVs_inWindow2);
-QDE_VpeaksCandidates(VbaselineDifference > baselineV_maxMismatch) = [];
-QDEs_baselineVs(VbaselineDifference > baselineV_maxMismatch) = [];
+    baselineVs_inWindow1 = zeros(no_of_VpeaksCandidates,1);
+    baselineVs_inWindow2 = zeros(no_of_VpeaksCandidates,1);
+    QDEs_baselineVs = zeros(no_of_VpeaksCandidates,1);
+        for i = 1:no_of_VpeaksCandidates
+            baselineVs_inWindow1(i) = mean(smoothVtrace(baselineTestWindows1(i,1):baselineTestWindows1(i,2)));
+            baselineVs_inWindow2(i) = mean(smoothVtrace(baselineTestWindows2(i,1):baselineTestWindows2(i,2)));
+            QDEs_baselineVs(i) = mean(smoothVtrace(baselineTestWindows1(i,1):baselineTestWindows2(i,2)));
+        end
+        VbaselineDifference = abs(baselineVs_inWindow1 - baselineVs_inWindow2);
+    QDE_VpeaksCandidates(VbaselineDifference > baselineV_maxMismatch) = [];
+    QDEs_baselineVs(VbaselineDifference > baselineV_maxMismatch) = [];
 
-%getting QDEamps for each QDE_VpeakIdx and filtering out QDEs < minAmp
-Vs_at_QDEs = singleVtrace(QDE_VpeaksCandidates);
-QDEs_amps = Vs_at_QDEs - QDEs_baselineVs;
-QDE_VpeaksCandidates(QDEs_amps < min_QDEamp) = [];
-QDEs_baselineVs(QDEs_amps < min_QDEamp) = [];
-QDEs_amps(QDEs_amps < min_QDEamp) = [];
+    %getting QDEamps for each QDE_VpeakIdx and filtering out QDEs < minAmp
+    Vs_at_QDEs = singleVtrace(QDE_VpeaksCandidates);
+    QDEs_amps = Vs_at_QDEs - QDEs_baselineVs;
+    QDE_VpeaksCandidates(QDEs_amps < min_QDEamp) = [];
+    QDEs_baselineVs(QDEs_amps < min_QDEamp) = [];
+    QDEs_amps(QDEs_amps < min_QDEamp) = [];
 
-no_of_VpeaksCandidates = length(QDE_VpeaksCandidates);
-%filtering out peaks that do not reach baselineV + max.mismatch within back-to-baseline window
-baselineReReach_traces = zeros(length(QDE_backToBaselineWindow(1):QDE_backToBaselineWindow(2)),length(QDE_VpeaksCandidates));
-baselineReReach_windows = [QDE_VpeaksCandidates+QDE_backToBaselineWindow(1),QDE_VpeaksCandidates+QDE_backToBaselineWindow(2)];
-    for i = 1:no_of_VpeaksCandidates
-        baselineReReach_traces(:,i) = smoothVtrace(baselineReReach_windows(i,1):baselineReReach_windows(i,2));
-    end
-    minVs_inBaselineReReachWindows = min(baselineReReach_traces)';
-    minBaselineV_criterions = QDEs_baselineVs + backToBaselineV_maxMismatch * QDEs_amps;
-    baselineReturnDifferences = minBaselineV_criterions - minVs_inBaselineReReachWindows;
-    QDE_VpeaksCandidates(baselineReturnDifferences < 0) = [];
-    QDEs_baselineVs(baselineReturnDifferences < 0) = [];
-    QDEs_amps(baselineReturnDifferences < 0) = [];
-    
-    QDEs_VpeaksIdcs = QDE_VpeaksCandidates;
+    no_of_VpeaksCandidates = length(QDE_VpeaksCandidates);
+    %filtering out peaks that do not reach baselineV + max.mismatch within back-to-baseline window
+    baselineReReach_traces = zeros(length(QDE_backToBaselineWindow(1):QDE_backToBaselineWindow(2)),length(QDE_VpeaksCandidates));
+    baselineReReach_windows = [QDE_VpeaksCandidates+QDE_backToBaselineWindow(1),QDE_VpeaksCandidates+QDE_backToBaselineWindow(2)];
+        for i = 1:no_of_VpeaksCandidates
+            baselineReReach_traces(:,i) = smoothVtrace(baselineReReach_windows(i,1):baselineReReach_windows(i,2));
+        end
+        minVs_inBaselineReReachWindows = min(baselineReReach_traces)';
+        minBaselineV_criterions = QDEs_baselineVs + backToBaselineV_maxMismatch * QDEs_amps;
+        baselineReturnDifferences = minBaselineV_criterions - minVs_inBaselineReReachWindows;
+        QDE_VpeaksCandidates(baselineReturnDifferences < 0) = [];
+        QDEs_baselineVs(baselineReturnDifferences < 0) = [];
+        QDEs_amps(baselineReturnDifferences < 0) = [];
+
+        QDEs_VpeaksIdcs = QDE_VpeaksCandidates;
     
 %plotting the Vtrace and the detected QDEpeaks with their baselines
-figure;hold on;
-plot(singleVtrace,'b');
-scatter(QDEs_VpeaksIdcs,singleVtrace(QDEs_VpeaksIdcs),'r');
-scatter(QDEs_VpeaksIdcs+QDE_baselineTestWindow1(2),singleVtrace(QDEs_VpeaksIdcs+QDE_baselineTestWindow1(2)),'g');
-xlabel('index no.')
-ylabel('voltage (mV')
+% figure;hold on;
+% plot(singleVtrace,'b');
+% scatter(QDEs_VpeaksIdcs,singleVtrace(QDEs_VpeaksIdcs),'r');
+% scatter(QDEs_VpeaksIdcs+QDE_baselineTestWindow1(2),singleVtrace(QDEs_VpeaksIdcs+QDE_baselineTestWindow1(2)),'g');
+% xlabel('index no.')
+% ylabel('voltage (mV')
 end
 
 function [QDEs_Vtraces,QDEs_riseTimes,QDEs_halfWidths] = get_QDEs_traces_and_measures(smoothVtrace,QDEs_VpeaksIdcs,QDEs_baselineVs,QDEs_amps,QDE_prePeakWindow,QDE_postPeakWindow,sr)
