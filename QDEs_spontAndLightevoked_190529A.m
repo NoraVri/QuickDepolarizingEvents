@@ -4,8 +4,7 @@
 clear all;
 close all;
 
-cd D:\neert\hujiGoogleDrive\research_YaromLabWork\data_elphys_andDirectlyRelatedThings\olive\myData_SmithLab\20190529D
-
+cd D:\neert\hujiGoogleDrive\research_YaromLabWork\data_elphys_andDirectlyRelatedThings\olive\myData_SmithLab\20190529A1A2
 
 %analysis steps:
 %1. looking at the raw data
@@ -15,7 +14,7 @@ cd D:\neert\hujiGoogleDrive\research_YaromLabWork\data_elphys_andDirectlyRelated
 %5: plotting things 
 %% step1: looking at the raw data
 %trace length should be the same for all concatenated traces
-cell_name = '190529D';
+cell_name = '190529A1';
 fileList = dir('*_light*.mat');
 %% plotting all traces overlayed for each file
 for i = 1:length(fileList)
@@ -43,14 +42,14 @@ end
 Vs = [];
 Is = [];
 TTLs = [];
-for i = 1:length(fileList)-1 %cell is dying in the last file
+for i = 1:length(fileList)
     load(fileList(i).name);
     vs = rawData_traces.voltage;
         meanVs = mean(vs);
     is = rawData_traces.current;
     ttl = rawData_traces.TTLpulse;
         %%filtering out traces where cell has bad baselineV
-minVrest = -40;
+minVrest = -35;
         is = is(:,meanVs<minVrest);
         ttl = ttl(:,meanVs<minVrest);
         vs = vs(:,meanVs<minVrest);
@@ -70,7 +69,7 @@ save([cell_name,'_collectedTraces_lightApplied'],'collectedQDEsData');
 
 %% step2b: loading prepared, saved data
 clear all;close all;
-load('190529D_collectedTraces_lightApplied');
+load('190529A1_collectedTraces_lightApplied');
 
 figure;
 ax(1) = subplot(3,1,[1 2]);
@@ -89,7 +88,7 @@ linkaxes(ax,'x')
 %QDEs are indexed by the trace no. they were in and the idx of the QDE peak within that trace (first two columns)
 %The table also contains the QDE in a window around the peak (third column), 
 %and the amplitude, rise-time and half-width (!half-width can be off when decay isn't smooth)
-min_QDEamp = .5;
+min_QDEamp = 1.5;
 max_QDEpeakV = -10;
 
 [collectedQDEsData_table] = getQuickDepolarizingEvents_inTable(collectedQDEsData,min_QDEamp,max_QDEpeakV);
@@ -100,7 +99,7 @@ max_QDEpeakV = -10;
 
 
 %% plotting things
-%scatters of QDE measures
+%scatters of QDE measures, color-coded for light-evoked and spont
 figure; hold on;
 scatter(spontQDEs_table.baselineVs(spontQDEs_table.riseTimes<1.7),spontQDEs_table.amps(spontQDEs_table.riseTimes<1.7));
 scatter(evokedQDEs_table.baselineVs(evokedQDEs_table.riseTimes<1.7),evokedQDEs_table.amps(evokedQDEs_table.riseTimes<1.7),'r','filled')
@@ -114,13 +113,13 @@ QDE_time_axis = collectedQDEsData.time_axis(1:QDEtrace_length_in_samples);
 figure;
 subplot(1,2,1),hold on;
 plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces)%(spontQDEs_table.riseTimes <= 1,:));
-ylim([-80 -40])
+ylim([-65 -40])
 xlabel('time (ms)')
 ylabel('voltage (mV)')
 title('spontaneous events')
 subplot(1,2,2),hold on;
 plot(QDE_time_axis,evokedQDEs_table.QDEs_Vtraces)%(evokedQDEs_table.riseTimes <= 1,:));
-ylim([-80 -40])
+ylim([-65 -40])
 xlabel('time (ms)')
 title('light-evoked events')
 
@@ -131,23 +130,23 @@ baselineWindow = 40; %avg. of the first 40 samples of each QDEtrace will be used
 spontQDEs_baselineVs = mean(spontQDEs_table.QDEs_Vtraces(:,1:baselineWindow),2);
 evokedQDEs_baselineVs = mean(evokedQDEs_table.QDEs_Vtraces(:,1:baselineWindow),2);
 QDE_time_axis = collectedQDEsData.time_axis(1:length(collectedQDEsData_table.QDEs_Vtraces(1,:)));
-baselineV_split = -65;
+baselineV_split = -55;
 
 figure;
 subplot(2,2,1),hold on;
 plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_baselineVs > baselineV_split,:)-spontQDEs_baselineVs(spontQDEs_baselineVs > baselineV_split));
-ylim([-1 5])
+ylim([-1 14])
 ylabel('baselined voltage')
 title('spont. events, baselineV = Vrest')
 
 subplot(2,2,2),hold on;
 plot(QDE_time_axis,evokedQDEs_table.QDEs_Vtraces(evokedQDEs_baselineVs > baselineV_split,:)-evokedQDEs_baselineVs(evokedQDEs_baselineVs > baselineV_split));
-ylim([-1 30])
+ylim([-1 14])
 title('evoked events, baseline = Vrest')
 
 subplot(2,2,3),hold on;
 plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_baselineVs < baselineV_split,:)-spontQDEs_baselineVs(spontQDEs_baselineVs < baselineV_split));
-ylim([-1 5])
+ylim([-1 14])
 xlabel('time (ms)')
 ylabel('baselined voltage')
 title('spont. events, hyperpolarized baseline')
@@ -155,7 +154,7 @@ title('spont. events, hyperpolarized baseline')
 subplot(2,2,4),hold on;
 plot(QDE_time_axis,evokedQDEs_table.QDEs_Vtraces(evokedQDEs_baselineVs < baselineV_split,:)-evokedQDEs_baselineVs(evokedQDEs_baselineVs < baselineV_split));
 xlabel('time (ms)')
-ylim([-1 30])
+ylim([-1 14])
 title('evoked events, hyperpolarized baseline')
 
 %% 4a: getting only traces where light does NOT evoke a spike
@@ -168,7 +167,7 @@ Windows_idcs = noSpikeEvoked_collectedQDEtraces.lightEvokedActivity_windows;
 
 window_length = 400;
 min_Vrange_inSnippet = .5;%I want to see only traces where there's a response of at least .5mV
-Vrange_cutoff = 20;
+Vrange_cutoff = 7;
 
 figure;
 for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
@@ -215,41 +214,33 @@ min_Vrange_inSnippet = .5;%I want to see only traces where there's a response of
 meanVcap = -45;%filter out one trace with bad Vrest at time of light
 window_length = 400;
 
-Vsplit_upper = -65;
-Vsplit_lower = -72;
+Vsplit_upper = -50;
+Vsplit_lower = -50;
 
-% baseline_Vs = zeros(1,length(noSpikeEvoked_collectedQDEtraces.voltage(1,:)));
-
-%split into three subplots
 figure; hold on;
 for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
     Vsnippet = voltages(Windows_idcs(1,i):Windows_idcs(1,i)+window_length,i);
     meanV_inSnippet = mean(Vsnippet);
     Vrange_inSnippet = max(Vsnippet) - min(Vsnippet);
     Vderivative = diff(smooth(Vsnippet));
-    if (meanV_inSnippet < meanVcap) && (Vrange_inSnippet >= min_Vrange_inSnippet) %&& (max(Vderivative) > .1) %this should filter out any traces where there isn't really a response to the light
+    if (meanV_inSnippet < meanVcap) && (Vrange_inSnippet >= min_Vrange_inSnippet) && (max(Vderivative) > .1) %this should filter out any traces where there isn't really a response to the light
         t_axis = time_axis(Windows_idcs(1,i):Windows_idcs(1,i)+window_length);
-        baseline_V = mean(Vsnippet(1:window_length/10));
-        baselined_Vsnippet = Vsnippet - baseline_V;
-        if baseline_V >= Vsplit_upper
-            subplot(3,1,1),hold on;
+        
+        baselined_Vsnippet = Vsnippet - mean(Vsnippet(1:window_length/10));
+        %sort into groups (below and above -65mV); baseline; plot
+        if meanV_inSnippet >= Vsplit_upper
+            subplot(2,1,1),hold on;
             plot(t_axis,baselined_Vsnippet,'linewidth',2);
-            ylim([-1 35])
+            ylim([-1 15])
             xlabel('trace start = light onset time')
             ylabel('baselined voltage (mV)')
             title(['baseline V > ' num2str(Vsplit_upper)])
-        elseif baseline_V < Vsplit_upper && baseline_V >= Vsplit_lower
-            subplot(3,1,2),hold on;
+        elseif meanV_inSnippet < Vsplit_lower
+            subplot(2,1,2),hold on;
             plot(t_axis,baselined_Vsnippet,'linewidth',2);
-            ylim([-1 35])
-            title([num2str(Vsplit_lower) ' < baseline V < ' num2str(Vsplit_upper)])
-        elseif baseline_V < Vsplit_lower
-            subplot(3,1,3),hold on;
-            plot(t_axis,baselined_Vsnippet,'linewidth',2);
-            ylim([-1 35])
+            ylim([-1 15])
             xlabel('time (ms)')
             title(['baseline V < ' num2str(Vsplit_lower)])
         end
     end
 end
-

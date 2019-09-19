@@ -4,7 +4,7 @@
 clear all;
 close all;
 
-cd D:\neert\hujiGoogleDrive\research_YaromLabWork\data_elphys_andDirectlyRelatedThings\olive\myData_SmithLab\20190529D
+cd D:\neert\hujiGoogleDrive\research_YaromLabWork\data_elphys_andDirectlyRelatedThings\olive\myData_SmithLab\20190529E
 
 
 %analysis steps:
@@ -15,7 +15,7 @@ cd D:\neert\hujiGoogleDrive\research_YaromLabWork\data_elphys_andDirectlyRelated
 %5: plotting things 
 %% step1: looking at the raw data
 %trace length should be the same for all concatenated traces
-cell_name = '190529D';
+cell_name = '190529E';
 fileList = dir('*_light*.mat');
 %% plotting all traces overlayed for each file
 for i = 1:length(fileList)
@@ -43,7 +43,7 @@ end
 Vs = [];
 Is = [];
 TTLs = [];
-for i = 1:length(fileList)-1 %cell is dying in the last file
+for i = 1:3%length(fileList) - cell is dying fast, only the first three files have data that's OK
     load(fileList(i).name);
     vs = rawData_traces.voltage;
         meanVs = mean(vs);
@@ -70,7 +70,7 @@ save([cell_name,'_collectedTraces_lightApplied'],'collectedQDEsData');
 
 %% step2b: loading prepared, saved data
 clear all;close all;
-load('190529D_collectedTraces_lightApplied');
+load('190529E_collectedTraces_lightApplied');
 
 figure;
 ax(1) = subplot(3,1,[1 2]);
@@ -114,13 +114,13 @@ QDE_time_axis = collectedQDEsData.time_axis(1:QDEtrace_length_in_samples);
 figure;
 subplot(1,2,1),hold on;
 plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces)%(spontQDEs_table.riseTimes <= 1,:));
-ylim([-80 -40])
+ylim([-75 -55])
 xlabel('time (ms)')
 ylabel('voltage (mV)')
 title('spontaneous events')
 subplot(1,2,2),hold on;
 plot(QDE_time_axis,evokedQDEs_table.QDEs_Vtraces)%(evokedQDEs_table.riseTimes <= 1,:));
-ylim([-80 -40])
+ylim([-75 -55])
 xlabel('time (ms)')
 title('light-evoked events')
 
@@ -136,18 +136,18 @@ baselineV_split = -65;
 figure;
 subplot(2,2,1),hold on;
 plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_baselineVs > baselineV_split,:)-spontQDEs_baselineVs(spontQDEs_baselineVs > baselineV_split));
-ylim([-1 5])
+ylim([-1 6])
 ylabel('baselined voltage')
 title('spont. events, baselineV = Vrest')
 
 subplot(2,2,2),hold on;
 plot(QDE_time_axis,evokedQDEs_table.QDEs_Vtraces(evokedQDEs_baselineVs > baselineV_split,:)-evokedQDEs_baselineVs(evokedQDEs_baselineVs > baselineV_split));
-ylim([-1 30])
+ylim([-1 6])
 title('evoked events, baseline = Vrest')
 
 subplot(2,2,3),hold on;
 plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_baselineVs < baselineV_split,:)-spontQDEs_baselineVs(spontQDEs_baselineVs < baselineV_split));
-ylim([-1 5])
+ylim([-1 6])
 xlabel('time (ms)')
 ylabel('baselined voltage')
 title('spont. events, hyperpolarized baseline')
@@ -155,7 +155,7 @@ title('spont. events, hyperpolarized baseline')
 subplot(2,2,4),hold on;
 plot(QDE_time_axis,evokedQDEs_table.QDEs_Vtraces(evokedQDEs_baselineVs < baselineV_split,:)-evokedQDEs_baselineVs(evokedQDEs_baselineVs < baselineV_split));
 xlabel('time (ms)')
-ylim([-1 30])
+ylim([-1 6])
 title('evoked events, hyperpolarized baseline')
 
 %% 4a: getting only traces where light does NOT evoke a spike
@@ -168,7 +168,7 @@ Windows_idcs = noSpikeEvoked_collectedQDEtraces.lightEvokedActivity_windows;
 
 window_length = 400;
 min_Vrange_inSnippet = .5;%I want to see only traces where there's a response of at least .5mV
-Vrange_cutoff = 20;
+Vrange_cutoff = 4;
 
 figure;
 for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
@@ -216,7 +216,8 @@ meanVcap = -45;%filter out one trace with bad Vrest at time of light
 window_length = 400;
 
 Vsplit_upper = -65;
-Vsplit_lower = -72;
+Vsplit_lower = -70;
+ylim_upper = 6;
 
 % baseline_Vs = zeros(1,length(noSpikeEvoked_collectedQDEtraces.voltage(1,:)));
 
@@ -234,19 +235,19 @@ for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
         if baseline_V >= Vsplit_upper
             subplot(3,1,1),hold on;
             plot(t_axis,baselined_Vsnippet,'linewidth',2);
-            ylim([-1 35])
+            ylim([-1 ylim_upper])
             xlabel('trace start = light onset time')
             ylabel('baselined voltage (mV)')
             title(['baseline V > ' num2str(Vsplit_upper)])
         elseif baseline_V < Vsplit_upper && baseline_V >= Vsplit_lower
             subplot(3,1,2),hold on;
             plot(t_axis,baselined_Vsnippet,'linewidth',2);
-            ylim([-1 35])
+            ylim([-1 ylim_upper])
             title([num2str(Vsplit_lower) ' < baseline V < ' num2str(Vsplit_upper)])
         elseif baseline_V < Vsplit_lower
             subplot(3,1,3),hold on;
             plot(t_axis,baselined_Vsnippet,'linewidth',2);
-            ylim([-1 35])
+            ylim([-1 ylim_upper])
             xlabel('time (ms)')
             title(['baseline V < ' num2str(Vsplit_lower)])
         end

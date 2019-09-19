@@ -18,25 +18,25 @@ cd D:\neert\hujiGoogleDrive\research_YaromLabWork\data_elphys_andDirectlyRelated
 cell_name = '190527A';
 fileList = dir('*_light_wholeField*.mat');
 %% plotting all traces overlayed for each file
-% for i = 1:length(fileList)
-%     load(fileList(i).name)
-%     V = rawData_traces.voltage;
-%     I = rawData_traces.current;
-%     TTL = rawData_traces.TTLpulse;
-%     time_axis = rawData_traces.time_axis;
-%     
-%     figure;
-%     ax(1) = subplot(2,1,1);hold on;
-%     plot(time_axis,V,'b');
-%         ylabel('voltage (mV)')
-%         title(fileList(i).name);
-%     ax(2) = subplot(2,1,2);hold on;
-%     plot(time_axis,I,'r');
-%     plot(time_axis,TTL,'k');
-%         ylabel('red: current (pA)')
-%         xlabel('time (ms)')
-%     linkaxes(ax,'x')
-% end
+for i = 1:length(fileList)
+    load(fileList(i).name)
+    V = rawData_traces.voltage;
+    I = rawData_traces.current;
+    TTL = rawData_traces.TTLpulse;
+    time_axis = rawData_traces.time_axis;
+    
+    figure;
+    ax(1) = subplot(2,1,1);hold on;
+    plot(time_axis,V,'b');
+        ylabel('voltage (mV)')
+        title(fileList(i).name);
+    ax(2) = subplot(2,1,2);hold on;
+    plot(time_axis,I,'r');
+    plot(time_axis,TTL,'k');
+        ylabel('red: current (pA)')
+        xlabel('time (ms)')
+    linkaxes(ax,'x')
+end
 
 %% step2: concatenating files for analysis
 %!! this script assumes that all files have the same length & sampling rate 
