@@ -70,11 +70,18 @@ save([cell_name,'_collectedTraces_lightApplied'],'collectedQDEsData');
 
 %% step2b: loading prepared, saved data
 clear all;close all;
-load('190527A_collectedTraces_lightApplied');
+cell_name = '190527A';
+load([cell_name '_collectedTraces_lightApplied']);
 
-
-
-
+figure;
+ax(1) = subplot(3,1,[1 2]);
+plot(collectedQDEsData.time_axis,collectedQDEsData.voltage);
+ylabel('voltage (mV)')
+ax(2) = subplot(3,1,3);hold on;
+plot(collectedQDEsData.time_axis,collectedQDEsData.current);
+plot(collectedQDEsData.time_axis,collectedQDEsData.TTL,'k','linewidth',2);
+xlabel('time (ms)')
+linkaxes(ax,'x')
 
 
 %% step3: getting all "clean" QDEs (peaksIdcs and baselineVs) in all traces
@@ -88,7 +95,7 @@ max_QDEpeakV = -10;
 
 [collectedQDEsData_table] = getQuickDepolarizingEvents_inTable(collectedQDEsData,min_QDEamp,max_QDEpeakV);
 
-%% 3b: separating out light-evoked and spontaneous QDEs
+% 3b: separating out light-evoked and spontaneous QDEs
 [spontQDEs_table,evokedQDEs_table] = splitQDEsTable_toLightEvokedAndSpont(collectedQDEsData,collectedQDEsData_table);
 
 %% plotting stuff
@@ -97,20 +104,20 @@ figure; hold on;
 scatter(spontQDEs_table.baselineVs(spontQDEs_table.riseTimes<1.7),spontQDEs_table.amps(spontQDEs_table.riseTimes<1.7));
 scatter(evokedQDEs_table.baselineVs(evokedQDEs_table.riseTimes<1.7),evokedQDEs_table.amps(evokedQDEs_table.riseTimes<1.7),'r','filled')
 xlabel('baseline V'), ylabel('QDE amp')
-title('blue: spontaneous events, red: light-evoked events')
+title([cell_name 'blue: spontaneous events, red: light-evoked events'])
 %%
 %plotting QDEs, raw, light-evoked and spontaneous in separate subplots
 QDEtrace_length_in_samples = length(collectedQDEsData_table.QDEs_Vtraces(1,:));
 QDE_time_axis = collectedQDEsData.time_axis(1:QDEtrace_length_in_samples);
 figure;
 subplot(1,2,1),hold on;
-plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_table.riseTimes <= 1,:));
+plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_table.riseTimes <= 1.7,:));
 ylim([-80 -40])
 xlabel('time (ms)')
 ylabel('voltage (mV)')
-title('spontaneous events')
+title([cell_name 'raw data, spontaneous events'])
 subplot(1,2,2),hold on;
-plot(QDE_time_axis,evokedQDEs_table.QDEs_Vtraces(evokedQDEs_table.riseTimes <= 1,:));
+plot(QDE_time_axis,evokedQDEs_table.QDEs_Vtraces(evokedQDEs_table.riseTimes <= 1.7,:));
 ylim([-80 -40])
 xlabel('time (ms)')
 title('light-evoked events')
@@ -127,7 +134,7 @@ subplot(2,2,1),hold on;
 plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_baselineVs > -65,:)-spontQDEs_baselineVs(spontQDEs_baselineVs > -65));
 ylim([-1 10])
 ylabel('baselined voltage')
-title('spont. events, baselineV = Vrest')
+title([cell_name 'raw data, spont. events, baselineV = Vrest'])
 
 subplot(2,2,2),hold on;
 plot(QDE_time_axis,evokedQDEs_table.QDEs_Vtraces(evokedQDEs_baselineVs > -65,:)-evokedQDEs_baselineVs(evokedQDEs_baselineVs > -65));
@@ -160,46 +167,43 @@ min_Vrange_inSnippet = .5;%I want to see only traces where there's a response of
 extraIdcs_inPlotWindow = 200;
 
 window_length = 400;
+Vrange_cutoff = 2;
 
 figure;
 for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
-%     Vsnippet = voltages(Windows_idcs(1,i):Windows_idcs(2,i)+extraIdcs_inPlotWindow,i);
     Vsnippet = voltages(Windows_idcs(1,i):Windows_idcs(1,i)+window_length,i);
 
     Vrange_inSnippet = max(Vsnippet) - min(Vsnippet);
     if Vrange_inSnippet >= min_Vrange_inSnippet
     
-%     t_axis = time_axis(Windows_idcs(1,i):Windows_idcs(2,i)+extraIdcs_inPlotWindow);
-%     shiftedTTL = TTLs(Windows_idcs(1,i):Windows_idcs(2,i)+extraIdcs_inPlotWindow,i) + mean(Vsnippet);
     t_axis = time_axis(Windows_idcs(1,i):Windows_idcs(1,i)+window_length);
     
-%         if Vrange_inSnippet < 3
-%             subplot(1,2,1),hold on;
-%             plot(t_axis,Vsnippet);
-%             %plot(t_axis,shiftedTTL,'k')
-%             ylim([-80 -35])
-%             xlabel('time (ms)')
-%             ylabel('voltage (mV)')
+        if Vrange_inSnippet < Vrange_cutoff
+            subplot(1,2,1),hold on;
+            plot(t_axis,Vsnippet);
+%             ylim([-55 -45])
+            xlabel('time (ms)')
+            ylabel('voltage (mV)')
 %             
 %             subplot(1,2,2),hold on;
 %             plot(t_axis(1:end-1),diff(smooth(Vsnippet,10)));
 %             ylabel('derivative of V')
         
-        if Vrange_inSnippet > 3
+        elseif Vrange_inSnippet > Vrange_cutoff
             subplot(1,2,2),hold on;
             plot(t_axis,Vsnippet);
-            ylim([-80 -35])
+%             ylim([-80 0])
             xlabel('time (ms)')
             ylabel('voltage (mV)')
             
-            subplot(1,2,1),hold on;
-            plot(t_axis(1:end-1),diff(smooth(Vsnippet,10)));
-            ylabel('derivative of V')
+%             subplot(1,2,1),hold on;
+%             plot(t_axis(1:end-1),diff(smooth(Vsnippet,10)));
+%             ylabel('derivative of V')
         end
     end
 end
 
-%% plotting overlay of relevant example-traces
+%% plotting overlay of relevant example-traces, baselined
 voltages = noSpikeEvoked_collectedQDEtraces.voltage;
 TTLs = noSpikeEvoked_collectedQDEtraces.TTL;
 time_axis = noSpikeEvoked_collectedQDEtraces.time_axis;

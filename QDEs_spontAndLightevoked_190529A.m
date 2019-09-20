@@ -9,9 +9,10 @@ cd D:\neert\hujiGoogleDrive\research_YaromLabWork\data_elphys_andDirectlyRelated
 %analysis steps:
 %1. looking at the raw data
 %2. concatenating traces for analysis (and creating a datastructure to hold them all)
-%3. getting all "clean" QDEs (peaksIdcs and baselineVs) in all traces in a table
-%4: separating out light-evoked and spontaneous QDEs into two tables
-%5: plotting things 
+%3. getting all "clean" QDEs (peaksIdcs and baselineVs) in all traces in a table, and
+%3b:separating out light-evoked and spontaneous QDEs into two tables
+
+%4: looking at evoked events at baseline and hyperpolarized V
 %% step1: looking at the raw data
 %trace length should be the same for all concatenated traces
 cell_name = '190529A1';
@@ -69,6 +70,7 @@ save([cell_name,'_collectedTraces_lightApplied'],'collectedQDEsData');
 
 %% step2b: loading prepared, saved data
 clear all;close all;
+cell_name = '190529A1';
 load('190529A1_collectedTraces_lightApplied');
 
 figure;
@@ -88,12 +90,13 @@ linkaxes(ax,'x')
 %QDEs are indexed by the trace no. they were in and the idx of the QDE peak within that trace (first two columns)
 %The table also contains the QDE in a window around the peak (third column), 
 %and the amplitude, rise-time and half-width (!half-width can be off when decay isn't smooth)
-min_QDEamp = 1.5;
+min_QDEamp = 1.5;%!!larger than usual by 1mV
 max_QDEpeakV = -10;
 
 [collectedQDEsData_table] = getQuickDepolarizingEvents_inTable(collectedQDEsData,min_QDEamp,max_QDEpeakV);
 
-%% step4: separating out light-evoked and spontaneous QDEs
+% 3b: separating out light-evoked and spontaneous QDEs
+%!!light-evoked "QDEs" did not get detected at all (and jury's still out on whether they're all just degenerate spikes)
 [spontQDEs_table,evokedQDEs_table] = splitQDEsTable_toLightEvokedAndSpont(collectedQDEsData,collectedQDEsData_table);
 
 
@@ -113,13 +116,13 @@ QDE_time_axis = collectedQDEsData.time_axis(1:QDEtrace_length_in_samples);
 figure;
 subplot(1,2,1),hold on;
 plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces)%(spontQDEs_table.riseTimes <= 1,:));
-ylim([-65 -40])
+ylim([-63 -24])
 xlabel('time (ms)')
 ylabel('voltage (mV)')
-title('spontaneous events')
+title([cell_name 'raw data, spontaneous events'])
 subplot(1,2,2),hold on;
 plot(QDE_time_axis,evokedQDEs_table.QDEs_Vtraces)%(evokedQDEs_table.riseTimes <= 1,:));
-ylim([-65 -40])
+ylim([-63 -24])
 xlabel('time (ms)')
 title('light-evoked events')
 
@@ -137,12 +140,12 @@ subplot(2,2,1),hold on;
 plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_baselineVs > baselineV_split,:)-spontQDEs_baselineVs(spontQDEs_baselineVs > baselineV_split));
 ylim([-1 14])
 ylabel('baselined voltage')
-title('spont. events, baselineV = Vrest')
+title([cell_name 'spont. events baselined, baselineV = Vrest (or higher)'])
 
 subplot(2,2,2),hold on;
 plot(QDE_time_axis,evokedQDEs_table.QDEs_Vtraces(evokedQDEs_baselineVs > baselineV_split,:)-evokedQDEs_baselineVs(evokedQDEs_baselineVs > baselineV_split));
 ylim([-1 14])
-title('evoked events, baseline = Vrest')
+title('evoked events, baseline = dying Vrest')
 
 subplot(2,2,3),hold on;
 plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_baselineVs < baselineV_split,:)-spontQDEs_baselineVs(spontQDEs_baselineVs < baselineV_split));
@@ -184,6 +187,7 @@ for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
 %             ylim([-55 -45])
             xlabel('time (ms)')
             ylabel('voltage (mV)')
+            title([cell_name 'raw data, events in light-evoked window with amp <' num2str(Vrange_cutoff)])
 %             
 %             subplot(1,2,2),hold on;
 %             plot(t_axis(1:end-1),diff(smooth(Vsnippet,10)));
@@ -195,6 +199,7 @@ for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
 %             ylim([-80 0])
             xlabel('time (ms)')
             ylabel('voltage (mV)')
+            title(['events with amp > ' num2str(Vrange_cutoff)])
             
 %             subplot(1,2,1),hold on;
 %             plot(t_axis(1:end-1),diff(smooth(Vsnippet,10)));
