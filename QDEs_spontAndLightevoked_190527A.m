@@ -69,7 +69,8 @@ collectedQDEsData.time_axis = time_axis;
 save([cell_name,'_collectedTraces_lightApplied'],'collectedQDEsData');
 
 %% step2b: loading prepared, saved data
-clear all;close all;
+clear all;
+cd D:\neert\hujiGoogleDrive\research_YaromLabWork\data_elphys_andDirectlyRelatedThings\olive\myData_SmithLab\20190527A
 cell_name = '190527A';
 load([cell_name '_collectedTraces_lightApplied']);
 
@@ -134,7 +135,7 @@ subplot(2,2,1),hold on;
 plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_baselineVs > -65,:)-spontQDEs_baselineVs(spontQDEs_baselineVs > -65));
 ylim([-1 10])
 ylabel('baselined voltage')
-title([cell_name 'raw data, spont. events, baselineV = Vrest'])
+title([cell_name 'baselined data, spont. events, baselineV = Vrest'])
 
 subplot(2,2,2),hold on;
 plot(QDE_time_axis,evokedQDEs_table.QDEs_Vtraces(evokedQDEs_baselineVs > -65,:)-evokedQDEs_baselineVs(evokedQDEs_baselineVs > -65));
@@ -184,6 +185,7 @@ for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
 %             ylim([-55 -45])
             xlabel('time (ms)')
             ylabel('voltage (mV)')
+            title([cell_name 'raw data, events in light-evoked window with amp <' num2str(Vrange_cutoff)])
 %             
 %             subplot(1,2,2),hold on;
 %             plot(t_axis(1:end-1),diff(smooth(Vsnippet,10)));
@@ -195,6 +197,7 @@ for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
 %             ylim([-80 0])
             xlabel('time (ms)')
             ylabel('voltage (mV)')
+            title(['events with amp > ' num2str(Vrange_cutoff)])
             
 %             subplot(1,2,1),hold on;
 %             plot(t_axis(1:end-1),diff(smooth(Vsnippet,10)));

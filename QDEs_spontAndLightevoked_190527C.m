@@ -69,7 +69,9 @@ collectedQDEsData.time_axis = time_axis;
 save([cell_name,'_collectedTraces_lightApplied'],'collectedQDEsData');
 
 %% step2b: loading prepared, saved data
-clear all;close all;
+clear all;
+cd D:\neert\hujiGoogleDrive\research_YaromLabWork\data_elphys_andDirectlyRelatedThings\olive\myData_SmithLab\20190527C
+
 cell_name = '190527C';
 load([cell_name '_collectedTraces_lightApplied']);
 

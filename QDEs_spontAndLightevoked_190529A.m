@@ -69,7 +69,9 @@ collectedQDEsData.time_axis = time_axis;
 save([cell_name,'_collectedTraces_lightApplied'],'collectedQDEsData');
 
 %% step2b: loading prepared, saved data
-clear all;close all;
+clear all;
+cd D:\neert\hujiGoogleDrive\research_YaromLabWork\data_elphys_andDirectlyRelatedThings\olive\myData_SmithLab\20190529A1A2
+
 cell_name = '190529A1';
 load('190529A1_collectedTraces_lightApplied');
 
@@ -168,7 +170,7 @@ voltages = noSpikeEvoked_collectedQDEtraces.voltage;
 time_axis = noSpikeEvoked_collectedQDEtraces.time_axis;
 Windows_idcs = noSpikeEvoked_collectedQDEtraces.lightEvokedActivity_windows;
 
-window_length = 400;
+window_length = 950;
 min_Vrange_inSnippet = .5;%I want to see only traces where there's a response of at least .5mV
 Vrange_cutoff = 7;
 
@@ -184,7 +186,7 @@ for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
         if Vrange_inSnippet < Vrange_cutoff
             subplot(1,2,1),hold on;
             plot(t_axis,Vsnippet);
-%             ylim([-55 -45])
+            ylim([-65 -25])
             xlabel('time (ms)')
             ylabel('voltage (mV)')
             title([cell_name 'raw data, events in light-evoked window with amp <' num2str(Vrange_cutoff)])
@@ -196,7 +198,7 @@ for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
         elseif Vrange_inSnippet > Vrange_cutoff
             subplot(1,2,2),hold on;
             plot(t_axis,Vsnippet);
-%             ylim([-80 0])
+            ylim([-65 -25])
             xlabel('time (ms)')
             ylabel('voltage (mV)')
             title(['events with amp > ' num2str(Vrange_cutoff)])
@@ -217,10 +219,11 @@ Windows_idcs = noSpikeEvoked_collectedQDEtraces.lightEvokedActivity_windows;
 
 min_Vrange_inSnippet = .5;%I want to see only traces where there's a response of at least .5mV
 meanVcap = -45;%filter out one trace with bad Vrest at time of light
-window_length = 400;
+window_length = 950;
 
 Vsplit_upper = -50;
 Vsplit_lower = -50;
+
 
 figure; hold on;
 for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
@@ -231,7 +234,7 @@ for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
     if (meanV_inSnippet < meanVcap) && (Vrange_inSnippet >= min_Vrange_inSnippet) && (max(Vderivative) > .1) %this should filter out any traces where there isn't really a response to the light
         t_axis = time_axis(Windows_idcs(1,i):Windows_idcs(1,i)+window_length);
         
-        baselined_Vsnippet = Vsnippet - mean(Vsnippet(1:window_length/10));
+        baselined_Vsnippet = Vsnippet - mean(Vsnippet(1:40));
         %sort into groups (below and above -65mV); baseline; plot
         if meanV_inSnippet >= Vsplit_upper
             subplot(2,1,1),hold on;
@@ -249,3 +252,30 @@ for i = 1:length(noSpikeEvoked_collectedQDEtraces.voltage(1,:))
         end
     end
 end
+
+
+%% plotting the stuff Yosi wants in a picture for the grant proposal
+%subplot1: spont QDEs at hyperpolarized V, baselined, from automatic detection
+%subplot2: evoked QDEs at hyperpolarized V, baselined, in illumination window (where lightOn idx happens to be the same in all traces in this recording)
+QDE_time_axis = collectedQDEsData.time_axis(1:length(collectedQDEsData_table.QDEs_Vtraces(1,:)));
+
+baselineWindow = 40; %avg. of the first 40 samples of each QDEtrace will be used as baseline value
+
+spontQDEs_baselineVs = mean(spontQDEs_table.QDEs_Vtraces(:,1:baselineWindow),2);
+evokedQDEs_baselineVs = mean(noSpikeEvoked_collectedQDEtraces.voltage(Windows_idcs(:,1):Windows_idcs(:,1)+baselineWindow,:));
+
+baselineV_split = -55;
+
+figure;
+subplot(1,2,1),hold on;
+plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_baselineVs < baselineV_split,:)-spontQDEs_baselineVs(spontQDEs_baselineVs < baselineV_split),'linewidth',2);
+ylim([-1 13])
+ylabel('baselined voltage')
+title('spont. events (peak-aligned), baselineV ~-60mV')
+
+subplot(1,2,2),hold on;
+evokedQDEs_Vtraces = noSpikeEvoked_collectedQDEtraces.voltage(noSpikeEvoked_collectedQDEtraces.lightEvokedActivity_windows(1,:):noSpikeEvoked_collectedQDEtraces.lightEvokedActivity_windows(1,:)+length(QDE_time_axis)-1,:);
+plot(QDE_time_axis, evokedQDEs_Vtraces(:,evokedQDEs_baselineVs < baselineV_split) - evokedQDEs_baselineVs(evokedQDEs_baselineVs < baselineV_split),'linewidth',2);
+ylim([-1 13])
+xlabel('time (ms)')
+title('light-evoked events (light onset aligned), baselineV ~-60mV')
