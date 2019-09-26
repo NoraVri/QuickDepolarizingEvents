@@ -279,3 +279,96 @@ plot(QDE_time_axis, evokedQDEs_Vtraces(:,evokedQDEs_baselineVs < baselineV_split
 ylim([-1 13])
 xlabel('time (ms)')
 title('light-evoked events (light onset aligned), baselineV ~-60mV')
+
+%%
+%1. finding one good example of an evoked QDE and substracting synapse-only response 
+%and 2. an example of spont. event that looks the same (decay-wise)
+
+%1
+% for i = 1:length(evokedQDEs_Vtraces(1,:))
+%     if evokedQDEs_baselineVs(i) < baselineV_split
+%         figure;
+%         plot(QDE_time_axis, evokedQDEs_Vtraces(:,i) - evokedQDEs_baselineVs(i),'linewidth',2);
+%         ylim([-1 13])
+%         xlabel('time (ms)')
+%         title(['light-evoked event' num2str(i)])
+%     end
+% 
+% end
+
+i1 = 19;
+i2 = 20;
+figure;hold on;
+subplot(1,2,1),hold on;
+plot(QDE_time_axis,evokedQDEs_Vtraces(:,[i1 i2])-evokedQDEs_baselineVs([i1 i2]));
+subplot(1,2,2),hold on;
+plot(QDE_time_axis,(evokedQDEs_Vtraces(:,i1)-evokedQDEs_baselineVs(i1))- (evokedQDEs_Vtraces(:,i2)-evokedQDEs_baselineVs(i2)));
+%%
+evokedQDEtrace = (evokedQDEs_Vtraces(:,i1)-evokedQDEs_baselineVs(i1)) - (evokedQDEs_Vtraces(:,i2)-evokedQDEs_baselineVs(i2));
+[~,evokedQDEtrace_peakIdx] = max(evokedQDEtrace);
+evokedQDEtrace_shortened = evokedQDEtrace(evokedQDEtrace_peakIdx-50:evokedQDEtrace_peakIdx+250);
+QDE_time_axis_shortened = QDE_time_axis(1:length(evokedQDEtrace_shortened));
+%2
+for i = 1:height(spontQDEs_table)
+    if spontQDEs_baselineVs(i) < baselineV_split
+        Vtrace = spontQDEs_table.QDEs_Vtraces(i,:);
+        QDEamp = max(Vtrace) - min(Vtrace);
+        if QDEamp > 6 && QDEamp < 8
+            [~,spontQDEtrace_peakIdx] = max(Vtrace);
+            spontQDEtrace_shortened = Vtrace(spontQDEtrace_peakIdx-50:spontQDEtrace_peakIdx+250);
+            
+            figure;hold on;
+            plot(QDE_time_axis_shortened,spontQDEtrace_shortened-spontQDEs_baselineVs(i),'b','linewidth',2);
+            plot(QDE_time_axis_shortened,evokedQDEtrace_shortened,'r','linewidth',2)
+            ylim([-1 13])
+            xlabel('time (ms)')
+            title(['red: evoked event; blue: spont. event' num2str(i)])
+        end
+    end
+end
+
+%%
+%panel 1: spont. events (as before, just fewer) - manually deleting
+%panel 2: evoked events (as before, just fewer)
+%panel3: single example spont, shorter time scale
+%panel 4: two examples evoked (synapse and QDE), shorter time scale 
+%panel 3: the example of evokedQDE-synapse overlayed with spont
+
+figure;
+subplot(2,6,[1 2 3]),hold on;
+plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_baselineVs < baselineV_split,:)-spontQDEs_baselineVs(spontQDEs_baselineVs < baselineV_split),'linewidth',2);
+ylim([-1 13])
+ylabel('baselined voltage (mV)')
+xlabel('time (ms)')
+title('spont. events (aligned to peak), baselineV ~-60mV')
+
+subplot(2,6,[4 5 6]),hold on;
+evokedQDEs_Vtraces = noSpikeEvoked_collectedQDEtraces.voltage(noSpikeEvoked_collectedQDEtraces.lightEvokedActivity_windows(1,:):noSpikeEvoked_collectedQDEtraces.lightEvokedActivity_windows(1,:)+length(QDE_time_axis)-1,:);
+plot(QDE_time_axis, evokedQDEs_Vtraces(:,evokedQDEs_baselineVs < baselineV_split) - evokedQDEs_baselineVs(evokedQDEs_baselineVs < baselineV_split),'linewidth',2);
+ylim([-1 13])
+xlabel('time (ms)')
+title('light-evoked events (aligned to light onset), baselineV ~-60mV')
+
+subplot(2,6,[7 8]),hold on;
+spont_i = 23;
+spont_Vtrace = spontQDEs_table.QDEs_Vtraces(spont_i,:);
+[~,spontQDEtrace_peakIdx] = max(spont_Vtrace);
+spontQDEtrace_shortened = spont_Vtrace(spontQDEtrace_peakIdx-50:spontQDEtrace_peakIdx+250);
+plot(QDE_time_axis_shortened,spontQDEtrace_shortened-spontQDEs_baselineVs(spont_i),'b','linewidth',2);
+ylim([-1 8])
+xlabel('time (ms)')
+title('spont. event, single example')
+
+subplot(2,6,[9 10]),hold on;
+plot(QDE_time_axis_shortened,spontQDEtrace_shortened-spontQDEs_baselineVs(spont_i),'b','linewidth',2);
+plot(QDE_time_axis_shortened,evokedQDEtrace_shortened,'k','linewidth',2);
+ylim([-1 8])
+xlabel('time (ms)')
+
+subplot(2,6,[11 12]),hold on;
+plot(QDE_time_axis,evokedQDEs_Vtraces(:,[i1 i2])-evokedQDEs_baselineVs([i1 i2]));
+plot(QDE_time_axis,(evokedQDEs_Vtraces(:,i1)-evokedQDEs_baselineVs(i1))- (evokedQDEs_Vtraces(:,i2)-evokedQDEs_baselineVs(i2)),'k','linewidth',2);
+ylim([-1 13])
+xlabel('time (ms)')
+title('evoked events w(/o) fast event, and substraction')
+
