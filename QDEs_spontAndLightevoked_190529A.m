@@ -334,9 +334,13 @@ end
 %panel 4: two examples evoked (synapse and QDE), shorter time scale 
 %panel 3: the example of evokedQDE-synapse overlayed with spont
 
+spont_i = 23; %the example for comparison with evoked
+spont_Vtrace = spontQDEs_table.QDEs_Vtraces(spont_i,:);
+
 figure;
 subplot(2,6,[1 2 3]),hold on;
 plot(QDE_time_axis,spontQDEs_table.QDEs_Vtraces(spontQDEs_baselineVs < baselineV_split,:)-spontQDEs_baselineVs(spontQDEs_baselineVs < baselineV_split),'linewidth',2);
+plot(QDE_time_axis,spont_Vtrace-spontQDEs_baselineVs(spont_i),'k','linewidth',2)
 ylim([-1 13])
 ylabel('baselined voltage (mV)')
 xlabel('time (ms)')
@@ -350,8 +354,6 @@ xlabel('time (ms)')
 title('light-evoked events (aligned to light onset), baselineV ~-60mV')
 
 subplot(2,6,[7 8]),hold on;
-spont_i = 23;
-spont_Vtrace = spontQDEs_table.QDEs_Vtraces(spont_i,:);
 [~,spontQDEtrace_peakIdx] = max(spont_Vtrace);
 spontQDEtrace_shortened = spont_Vtrace(spontQDEtrace_peakIdx-50:spontQDEtrace_peakIdx+250);
 plot(QDE_time_axis_shortened,spontQDEtrace_shortened-spontQDEs_baselineVs(spont_i),'b','linewidth',2);
@@ -364,6 +366,7 @@ plot(QDE_time_axis_shortened,spontQDEtrace_shortened-spontQDEs_baselineVs(spont_
 plot(QDE_time_axis_shortened,evokedQDEtrace_shortened,'k','linewidth',2);
 ylim([-1 8])
 xlabel('time (ms)')
+title('visual comparison')
 
 subplot(2,6,[11 12]),hold on;
 plot(QDE_time_axis,evokedQDEs_Vtraces(:,[i1 i2])-evokedQDEs_baselineVs([i1 i2]));
